@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- The Design page on a lead. Shown only on Design / Build pipelines. -->
+    <record id="crm_lead_view_form_twp_db" model="ir.ui.view">
+        <field name="name">crm.lead.form.twp.design.build</field>
+        <field name="model">crm.lead</field>
+        <field name="inherit_id" ref="crm.crm_lead_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//page[@name='internal_notes']" position="before">
+                <page string="Design" name="twp_design_build" invisible="not twp_db_is_design_build">
+                    <field name="twp_db_is_design_build" invisible="1"/>
+                    <group>
+                        <group name="twp_db_lines">
+                            <field name="twp_db_line_ids" widget="many2many_tags" options="{'no_create': True}"/>
+                        </group>
+                        <group string="Done" name="twp_db_done">
+                            <field name="twp_db_survey_done"/>
+                            <field name="twp_db_design_done"/>
+                            <field name="twp_db_layout_done"/>
+                        </group>
+                    </group>
+                    <separator string="Buildings"/>
+                    <field name="twp_db_building_ids" context="{'default_lead_id': id}">
+                        <list editable="bottom">
+                            <field name="sequence" widget="handle"/>
+                            <field name="name" placeholder="Bldg 1"/>
+                            <field name="length"/>
+                            <field name="width"/>
+                            <field name="eave_height"/>
+                            <field name="area"/>
+                            <field name="volume" optional="hide"/>
+                            <field name="function" optional="show"/>
+                            <field name="is_measured" column_invisible="True"/>
+                        </list>
+                    </field>
+                    <separator string="Design jobs"/>
+                    <field name="twp_db_job_ids" readonly="1">
+                        <list>
+                            <field name="line_id"/>
+                            <field name="sizing_basis" optional="show"/>
+                            <field name="equipment" optional="show"/>
+                            <field name="design_done"/>
+                            <field name="layout_done"/>
+                            <button name="action_open_record" type="object" icon="fa-arrow-right" title="Open the job"/>
+                        </list>
+                    </field>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- On a Design / Build pipeline, the lines are chosen when the card is added from the board. -->
+    <record id="quick_create_opportunity_form_twp_db" model="ir.ui.view">
+        <field name="name">crm.lead.form.quick_create.twp.design.build</field>
+        <field name="model">crm.lead</field>
+        <field name="inherit_id" ref="crm.quick_create_opportunity_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='name']/.." position="after">
+                <field name="twp_db_is_design_build" invisible="1"/>
+                <field name="twp_db_line_ids" widget="many2many_tags" placeholder="Designing for"
+                       options="{'no_create': True}" invisible="not twp_db_is_design_build"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="crm_lead_view_kanban_twp_db" model="ir.ui.view">
+        <field name="name">crm.lead.kanban.twp.design.build</field>
+        <field name="model">crm.lead</field>
+        <field name="inherit_id" ref="crm.crm_case_kanban_view_leads"/>
+        <field name="arch" type="xml">
+            <xpath expr="//t[@t-name='card']/field[@name='name']" position="after">
+                <field name="twp_db_line_ids" widget="many2many_tags" invisible="not twp_db_line_ids"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="crm_lead_view_list_twp_db" model="ir.ui.view">
+        <field name="name">crm.lead.list.twp.design.build</field>
+        <field name="model">crm.lead</field>
+        <field name="inherit_id" ref="crm.crm_case_tree_view_oppor"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='name']" position="after">
+                <field name="twp_db_line_ids" widget="many2many_tags" optional="hide"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="crm_lead_view_search_twp_db" model="ir.ui.view">
+        <field name="name">crm.lead.search.twp.design.build</field>
+        <field name="model">crm.lead</field>
+        <field name="inherit_id" ref="crm.view_crm_case_opportunities_filter"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='name']" position="after">
+                <field name="twp_db_line_ids" string="Designing for"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <menuitem id="menu_config_design_build" name="Design / Build" parent="crm.crm_menu_config" sequence="51"/>
+    <menuitem id="menu_config_design_lines" parent="menu_config_design_build" action="action_twp_design_line"
+              sequence="1"/>
+</odoo>

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="crm_team_view_form_twp_db" model="ir.ui.view">
+        <field name="name">crm.team.form.twp.design.build</field>
+        <field name="model">crm.team</field>
+        <field name="inherit_id" ref="sales_team.crm_team_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[@name='options_active']" position="inside">
+                <span name="twp_design_build">
+                    <field name="twp_db_enabled"/>
+                    <label for="twp_db_enabled"/>
+                </span>
+            </xpath>
+        </field>
+    </record>
+</odoo>

@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="twp_design_building_view_form" model="ir.ui.view">
+        <field name="name">twp.design.building.form</field>
+        <field name="model">twp.design.building</field>
+        <field name="arch" type="xml">
+            <form string="Building">
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="name" placeholder="Bldg 1"/></h1>
+                    </div>
+                    <group>
+                        <group string="Size" name="size">
+                            <field name="lead_id" readonly="id" options="{'no_create': True}"/>
+                            <field name="length"/>
+                            <field name="width"/>
+                            <field name="eave_height"/>
+                            <field name="area"/>
+                            <field name="volume"/>
+                        </group>
+                        <group string="Use" name="use">
+                            <field name="function"/>
+                            <field name="function_other" invisible="function != 'other'"/>
+                            <field name="activity"/>
+                            <field name="desired_temperature"/>
+                            <field name="roof_shape"/>
+                            <field name="venting"/>
+                        </group>
+                        <group string="Walls" name="walls">
+                            <field name="wall_material"/>
+                            <field name="wall_insulation"/>
+                            <field name="wall_r_value"/>
+                        </group>
+                        <group string="Roof" name="roof">
+                            <field name="roof_material"/>
+                            <field name="roof_insulation"/>
+                            <field name="roof_r_value"/>
+                        </group>
+                        <group string="Doors and slab" name="doors">
+                            <field name="door_type"/>
+                            <field name="door_insulation"/>
+                            <field name="slab_edge"/>
+                        </group>
+                        <group string="Drawings" name="drawings">
+                            <field name="floor_plan_attachment_ids" widget="many2many_binary"/>
+                            <field name="elevation_attachment_ids" widget="many2many_binary"/>
+                        </group>
+                    </group>
+                    <field name="notes" placeholder="Notes: obstructions, anything the survey form has no box for"/>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="twp_design_building_view_list" model="ir.ui.view">
+        <field name="name">twp.design.building.list</field>
+        <field name="model">twp.design.building</field>
+        <field name="arch" type="xml">
+            <list string="Buildings">
+                <field name="lead_id"/>
+                <field name="name"/>
+                <field name="length"/>
+                <field name="width"/>
+                <field name="eave_height"/>
+                <field name="area" sum="Area"/>
+                <field name="function" optional="show"/>
+            </list>
+        </field>
+    </record>
+</odoo>
