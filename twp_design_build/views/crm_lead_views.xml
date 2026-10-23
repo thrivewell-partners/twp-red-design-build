@@ -62,8 +62,11 @@
         <field name="arch" type="xml">
             <xpath expr="//field[@name='name']/.." position="after">
                 <field name="twp_db_is_design_build" invisible="1"/>
-                <field name="twp_db_line_ids" widget="many2many_tags" placeholder="Designing for"
-                       options="{'no_create': True}" invisible="not twp_db_is_design_build"/>
+                <div class="d-flex align-items-center" colspan="2" invisible="not twp_db_is_design_build">
+                    <i class="fa fa-tags" title="Designing for"/>
+                    <field name="twp_db_line_ids" widget="many2many_tags" nolabel="1" placeholder="Designing for"
+                           class="o_field_highlight w-100 mb-0" options="{'no_create': True}"/>
+                </div>
             </xpath>
         </field>
     </record>
