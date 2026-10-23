@@ -37,8 +37,8 @@
                             <field name="length"/>
                             <field name="width"/>
                             <field name="eave_height"/>
+                            <field name="ridge_height" invisible="roof_shape == 'flat'"/>
                             <field name="roof_shape"/>
-                            <field name="peak_height" invisible="roof_shape not in ('pitched', 'dome')"/>
                         </group>
                         <group string="Works out to" name="sizes">
                             <field name="area"/>
@@ -106,10 +106,10 @@
                             <field name="length"/>
                             <field name="width"/>
                             <field name="eave_height"/>
+                            <field name="ridge_height" invisible="roof_shape == 'flat'"/>
                         </group>
                         <group string="Roof">
                             <field name="roof_shape" widget="radio" options="{'horizontal': true}"/>
-                            <field name="peak_height" invisible="roof_shape not in ('pitched', 'dome')"/>
                         </group>
                     </group>
                     <group>

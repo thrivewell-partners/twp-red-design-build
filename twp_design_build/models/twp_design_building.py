@@ -32,9 +32,9 @@ class TwpDesignBuilding(models.Model):
     is_measured = fields.Boolean(
         "Measured", compute="_compute_size", store=True, help="Length, width and eave height are all filled in.")
     roof_shape = fields.Selection([("flat", "Flat"), ("dome", "Dome"), ("pitched", "Pitched")])
-    peak_height = fields.Float(
-        "Peak height (ft)", help="Floor to the peak. Recorded only: like the heat-loss template, the sizes "
-                                 "below take the roof as flat at the eave height.")
+    ridge_height = fields.Float(
+        "Ridge height (ft)", help="Floor to the ridge, or to the top of a dome. Recorded only: like the "
+                                  "heat-loss template, the sizes below take the roof as flat at the eave height.")
     # The envelope as the heat-loss template sizes it: gross walls, a flat roof, the full slab perimeter.
     wall_area = fields.Float("Wall area (sq ft)", compute="_compute_size", store=True)
     roof_area = fields.Float("Roof area (sq ft)", compute="_compute_size", store=True)

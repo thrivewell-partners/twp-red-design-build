@@ -30,6 +30,7 @@
                             <field name="length"/>
                             <field name="width"/>
                             <field name="eave_height"/>
+                            <field name="ridge_height" optional="show"/>
                             <field name="area"/>
                             <field name="volume" optional="hide"/>
                             <field name="function" optional="show"/>
