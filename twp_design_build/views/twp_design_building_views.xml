@@ -37,13 +37,15 @@
                             <field name="length"/>
                             <field name="width"/>
                             <field name="eave_height"/>
-                            <field name="ridge_height" invisible="roof_shape == 'flat'"/>
                             <field name="roof_shape"/>
+                            <field name="ridge_height" invisible="roof_shape == 'flat'"/>
+                            <field name="ridge_along" invisible="roof_shape != 'pitched'"/>
                         </group>
                         <group string="Works out to" name="sizes">
                             <field name="area"/>
                             <field name="volume"/>
-                            <field name="wall_area"/>
+                            <field name="long_wall_area"/>
+                            <field name="end_wall_area"/>
                             <field name="roof_area"/>
                             <field name="slab_perimeter"/>
                         </group>
@@ -110,6 +112,8 @@
                         </group>
                         <group string="Roof">
                             <field name="roof_shape" widget="radio" options="{'horizontal': true}"/>
+                            <field name="ridge_along" widget="radio" options="{'horizontal': true}"
+                                   invisible="roof_shape != 'pitched'"/>
                         </group>
                     </group>
                     <group>
@@ -118,7 +122,8 @@
                             <field name="volume"/>
                         </group>
                         <group string="Envelope">
-                            <field name="wall_area"/>
+                            <field name="long_wall_area"/>
+                            <field name="end_wall_area"/>
                             <field name="roof_area"/>
                             <field name="slab_perimeter"/>
                         </group>
@@ -184,7 +189,8 @@
                             <field name="is_measured"/>
                         </group>
                         <group string="Envelope">
-                            <field name="wall_area"/>
+                            <field name="long_wall_area"/>
+                            <field name="end_wall_area"/>
                             <field name="roof_area"/>
                             <field name="door_area"/>
                             <field name="window_area"/>

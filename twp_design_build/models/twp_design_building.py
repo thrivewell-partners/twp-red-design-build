@@ -1,3 +1,5 @@
+from math import hypot
+
 from odoo import api, fields, models
 
 INSULATED = [("insulated", "Insulated"), ("uninsulated", "Un-insulated")]
@@ -33,9 +35,18 @@ class TwpDesignBuilding(models.Model):
         "Measured", compute="_compute_size", store=True, help="Length, width and eave height are all filled in.")
     roof_shape = fields.Selection([("flat", "Flat"), ("dome", "Dome"), ("pitched", "Pitched")])
     ridge_height = fields.Float(
-        "Ridge height (ft)", help="Floor to the ridge, or to the top of a dome. Recorded only: like the "
-                                  "heat-loss template, the sizes below take the roof as flat at the eave height.")
-    # The envelope as the heat-loss template sizes it: gross walls, a flat roof, the full slab perimeter.
+        "Ridge height (ft)", help="Floor to the ridge. On a pitched roof it adds the gables to the end walls, "
+                                  "the slope to the roof and the space under it to the volume. A dome is still "
+                                  "sized flat at the eave height.")
+    ridge_along = fields.Selection(
+        [("length", "Length"), ("width", "Width")], string="Ridge runs along", default="length",
+        help="The gables are on the other two walls.")
+    # The envelope as the heat-loss template sizes it: gross walls with no doors taken off, and the
+    # full slab perimeter. A flat roof is the template's own arithmetic, cell for cell.
+    long_wall_area = fields.Float(
+        "Long walls (sq ft)", compute="_compute_size", store=True, help="Both walls along the length: Wall 1.")
+    end_wall_area = fields.Float(
+        "End walls (sq ft)", compute="_compute_size", store=True, help="Both walls across the width: Wall 2.")
     wall_area = fields.Float("Wall area (sq ft)", compute="_compute_size", store=True)
     roof_area = fields.Float("Roof area (sq ft)", compute="_compute_size", store=True)
     slab_perimeter = fields.Float("Slab edge (lin ft)", compute="_compute_size", store=True)
@@ -73,17 +84,29 @@ class TwpDesignBuilding(models.Model):
     # Where the survey wizard is. Stored, so a survey left half done reopens where it stopped.
     survey_step = fields.Selection(SURVEY_STEPS, default="size", required=True)
 
-    @api.depends("length", "width", "eave_height")
+    @api.depends("length", "width", "eave_height", "roof_shape", "ridge_height", "ridge_along")
     def _compute_size(self):
         for building in self:
-            # The heat-loss template's own arithmetic, cell for cell (K9, I9, C15 + C16, C18, C22).
             length, width, height = building.length, building.width, building.eave_height
+            # Flat: the template's cells K9, I9, C15, C16, C18 and C22.
             building.area = length * width
-            building.volume = length * width * height
             building.is_measured = length > 0 and width > 0 and height > 0
-            building.wall_area = (length + width) * 2 * height
-            building.roof_area = length * width
             building.slab_perimeter = (length + width) * 2
+            long_walls, end_walls = length * height * 2, width * height * 2
+            volume, roof = length * width * height, length * width
+            rise = building.ridge_height - height
+            if building.roof_shape == "pitched" and building.is_measured and rise > 0:
+                # Two gables, each half the span times the rise, on the walls across the ridge.
+                span, run = (width, length) if building.ridge_along == "length" else (length, width)
+                if building.ridge_along == "length":
+                    end_walls += span * rise
+                else:
+                    long_walls += span * rise
+                volume += span * run * rise / 2
+                roof = run * 2 * hypot(span / 2, rise)
+            building.long_wall_area, building.end_wall_area = long_walls, end_walls
+            building.wall_area = long_walls + end_walls
+            building.volume, building.roof_area = volume, roof
 
     @api.depends("opening_ids.kind", "opening_ids.count", "opening_ids.area")
     def _compute_openings(self):

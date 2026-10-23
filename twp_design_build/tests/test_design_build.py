@@ -143,6 +143,23 @@ class TestDesignBuild(TransactionCase):
         self.assertEqual(building.roof_area, 2700, "A flat roof")
         self.assertEqual(building.slab_perimeter, 240)
 
+    def test_a_ridge_adds_the_gables_the_slope_and_the_space_under_it(self):
+        building = self._building(self._lead(), length=90, width=30, eave_height=14, ridge_height=19)
+        self.assertEqual(building.volume, 37800, "Only a pitched roof uses the ridge")
+        building.roof_shape = "pitched"
+        # A 5 ft rise over a 30 ft span: two gables of 15 x 5 on the end walls.
+        self.assertEqual(building.end_wall_area, 30 * 14 * 2 + 30 * 5)
+        self.assertEqual(building.long_wall_area, 90 * 14 * 2)
+        self.assertEqual(building.volume, 37800 + 90 * 30 * 5 / 2)
+        self.assertAlmostEqual(building.roof_area, 90 * 2 * (15 ** 2 + 5 ** 2) ** .5)
+        self.assertEqual(building.area, 2700, "The floor is the floor")
+        building.ridge_along = "width"
+        self.assertEqual(building.long_wall_area, 90 * 14 * 2 + 90 * 5)
+        self.assertEqual(building.end_wall_area, 30 * 14 * 2)
+        self.assertAlmostEqual(building.roof_area, 30 * 2 * (45 ** 2 + 5 ** 2) ** .5)
+        building.roof_shape = "flat"
+        self.assertEqual(building.roof_area, 2700)
+
     def test_doors_and_windows_add_up_by_kind(self):
         building = self._building(self._lead(), length=90, width=30, eave_height=14)
         building.opening_ids = [
