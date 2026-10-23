@@ -1,30 +1,51 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
+    <record id="twp_design_building_opening_view_list" model="ir.ui.view">
+        <field name="name">twp.design.building.opening.list</field>
+        <field name="model">twp.design.building.opening</field>
+        <field name="arch" type="xml">
+            <list editable="bottom">
+                <field name="sequence" widget="handle"/>
+                <field name="kind"/>
+                <field name="door_style" invisible="kind != 'door'"/>
+                <field name="count"/>
+                <field name="width"/>
+                <field name="height"/>
+                <field name="area" sum="Area"/>
+                <field name="insulated" invisible="kind != 'door'"/>
+                <field name="note" optional="show"/>
+            </list>
+        </field>
+    </record>
+
     <record id="twp_design_building_view_form" model="ir.ui.view">
         <field name="name">twp.design.building.form</field>
         <field name="model">twp.design.building</field>
         <field name="arch" type="xml">
             <form string="Building">
                 <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_open_survey" type="object" class="oe_stat_button" icon="fa-list-ol"
+                                string="Survey"/>
+                    </div>
                     <div class="oe_title">
                         <h1><field name="name" placeholder="Bldg 1"/></h1>
                     </div>
                     <group>
-                        <group string="Size" name="size">
+                        <group string="Size and roof" name="size">
                             <field name="lead_id" readonly="id" options="{'no_create': True}"/>
                             <field name="length"/>
                             <field name="width"/>
                             <field name="eave_height"/>
+                            <field name="roof_shape"/>
+                            <field name="peak_height" invisible="roof_shape not in ('pitched', 'dome')"/>
+                        </group>
+                        <group string="Works out to" name="sizes">
                             <field name="area"/>
                             <field name="volume"/>
-                        </group>
-                        <group string="Use" name="use">
-                            <field name="function"/>
-                            <field name="function_other" invisible="function != 'other'"/>
-                            <field name="activity"/>
-                            <field name="desired_temperature"/>
-                            <field name="roof_shape"/>
-                            <field name="venting"/>
+                            <field name="wall_area"/>
+                            <field name="roof_area"/>
+                            <field name="slab_perimeter"/>
                         </group>
                         <group string="Walls" name="walls">
                             <field name="wall_material"/>
@@ -36,10 +57,25 @@
                             <field name="roof_insulation"/>
                             <field name="roof_r_value"/>
                         </group>
-                        <group string="Doors and slab" name="doors">
-                            <field name="door_type"/>
-                            <field name="door_insulation"/>
+                    </group>
+                    <separator string="Doors and windows"/>
+                    <field name="opening_ids"/>
+                    <group>
+                        <group name="slab">
                             <field name="slab_edge"/>
+                        </group>
+                        <group name="opening_totals">
+                            <field name="door_count"/>
+                            <field name="door_area"/>
+                            <field name="window_area"/>
+                            <field name="skylight_area"/>
+                        </group>
+                        <group string="Use" name="use">
+                            <field name="function"/>
+                            <field name="function_other" invisible="function != 'other'"/>
+                            <field name="activity"/>
+                            <field name="desired_temperature"/>
+                            <field name="venting"/>
                         </group>
                         <group string="Drawings" name="drawings">
                             <field name="floor_plan_attachment_ids" widget="many2many_binary"/>
@@ -63,31 +99,32 @@
                     <field name="survey_step" widget="statusbar" options="{'clickable': '1'}"/>
                 </header>
                 <field name="lead_id" invisible="1"/>
-                <group invisible="survey_step != 'size'">
-                    <group string="Size">
-                        <field name="name" placeholder="Bldg 1"/>
-                        <field name="length"/>
-                        <field name="width"/>
-                        <field name="eave_height"/>
+                <div name="step_size" invisible="survey_step != 'size'">
+                    <group>
+                        <group string="Size">
+                            <field name="name" placeholder="Bldg 1"/>
+                            <field name="length"/>
+                            <field name="width"/>
+                            <field name="eave_height"/>
+                        </group>
+                        <group string="Roof">
+                            <field name="roof_shape" widget="radio" options="{'horizontal': true}"/>
+                            <field name="peak_height" invisible="roof_shape not in ('pitched', 'dome')"/>
+                        </group>
                     </group>
-                    <group string="Works out to">
-                        <field name="area"/>
-                        <field name="volume"/>
+                    <group>
+                        <group string="Works out to">
+                            <field name="area"/>
+                            <field name="volume"/>
+                        </group>
+                        <group string="Envelope">
+                            <field name="wall_area"/>
+                            <field name="roof_area"/>
+                            <field name="slab_perimeter"/>
+                        </group>
                     </group>
-                </group>
-                <group invisible="survey_step != 'use'">
-                    <group string="Use">
-                        <field name="function"/>
-                        <field name="function_other" invisible="function != 'other'"/>
-                        <field name="activity" placeholder="What goes on inside"/>
-                        <field name="desired_temperature"/>
-                    </group>
-                    <group string="Shape">
-                        <field name="roof_shape" widget="radio"/>
-                        <field name="venting" widget="radio"/>
-                    </group>
-                </group>
-                <group invisible="survey_step != 'envelope'">
+                </div>
+                <group name="step_envelope" invisible="survey_step != 'envelope'">
                     <group string="Walls">
                         <field name="wall_material" placeholder="e.g. metal panel"/>
                         <field name="wall_insulation" placeholder="e.g. fiberglass batt"/>
@@ -99,16 +136,36 @@
                         <field name="roof_r_value"/>
                     </group>
                 </group>
-                <group invisible="survey_step != 'doors'">
-                    <group string="Doors">
-                        <field name="door_type" widget="radio"/>
-                        <field name="door_insulation" widget="radio"/>
+                <div name="step_doors" invisible="survey_step != 'doors'">
+                    <p class="text-muted">
+                        One row per kind of door or window: overhead, man doors, windows, skylights.
+                        Several the same size go on one row with their count.
+                    </p>
+                    <field name="opening_ids"/>
+                    <group>
+                        <group string="Slab">
+                            <field name="slab_edge" widget="radio" options="{'horizontal': true}"/>
+                        </group>
+                        <group string="Totals">
+                            <field name="door_count"/>
+                            <field name="door_area"/>
+                            <field name="window_area"/>
+                            <field name="skylight_area"/>
+                        </group>
                     </group>
-                    <group string="Slab">
-                        <field name="slab_edge" widget="radio"/>
+                </div>
+                <group name="step_use" invisible="survey_step != 'use'">
+                    <group string="Use">
+                        <field name="function"/>
+                        <field name="function_other" invisible="function != 'other'"/>
+                        <field name="activity" placeholder="What goes on inside"/>
+                    </group>
+                    <group string="Comfort">
+                        <field name="desired_temperature"/>
+                        <field name="venting" widget="radio" options="{'horizontal': true}"/>
                     </group>
                 </group>
-                <group invisible="survey_step != 'drawings'">
+                <group name="step_drawings" invisible="survey_step != 'drawings'">
                     <group string="Drawings">
                         <field name="floor_plan_attachment_ids" widget="many2many_binary"/>
                         <field name="elevation_attachment_ids" widget="many2many_binary"/>
@@ -118,15 +175,33 @@
                                placeholder="Obstructions, anything the survey form has no box for"/>
                     </group>
                 </group>
+                <!-- Line modules put their results here, e.g. the heat loss, so it is seen before Done. -->
+                <div name="step_review" invisible="survey_step != 'review'">
+                    <group>
+                        <group string="Building">
+                            <field name="area" string="Floor area (sq ft)"/>
+                            <field name="volume"/>
+                            <field name="is_measured"/>
+                        </group>
+                        <group string="Envelope">
+                            <field name="wall_area"/>
+                            <field name="roof_area"/>
+                            <field name="door_area"/>
+                            <field name="window_area"/>
+                            <field name="skylight_area"/>
+                            <field name="slab_perimeter"/>
+                        </group>
+                    </group>
+                </div>
                 <footer>
                     <button name="action_survey_back" string="Back" type="object"
                             invisible="survey_step == 'size'"/>
                     <button name="action_survey_next" string="Next" type="object" class="btn-primary"
-                            invisible="survey_step == 'drawings'"/>
+                            invisible="survey_step == 'review'"/>
                     <button name="action_survey_done" string="Done" type="object" class="btn-primary"
-                            invisible="survey_step != 'drawings'"/>
+                            invisible="survey_step != 'review'"/>
                     <button string="Save and close" special="save" class="btn-secondary"
-                            invisible="survey_step == 'drawings'"/>
+                            invisible="survey_step == 'review'"/>
                     <button string="Discard" special="cancel" class="btn-secondary"/>
                 </footer>
             </form>

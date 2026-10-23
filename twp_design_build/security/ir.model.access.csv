@@ -3,3 +3,4 @@ access_twp_design_line_user,twp.design.line user,model_twp_design_line,sales_tea
 access_twp_design_line_manager,twp.design.line manager,model_twp_design_line,sales_team.group_sale_manager,1,1,1,1
 access_twp_design_job_user,twp.design.job user,model_twp_design_job,sales_team.group_sale_salesman,1,1,1,1
 access_twp_design_building_user,twp.design.building user,model_twp_design_building,sales_team.group_sale_salesman,1,1,1,1
+access_twp_design_building_opening_user,twp.design.building.opening user,model_twp_design_building_opening,sales_team.group_sale_salesman,1,1,1,1

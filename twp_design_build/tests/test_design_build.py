@@ -128,11 +128,31 @@ class TestDesignBuild(TransactionCase):
 
         self.assertEqual(building.action_survey_back()["res_id"], building.id)
         self.assertEqual(building.survey_step, "size", "Back stops at the first step")
-        for step in ("use", "envelope", "doors", "drawings", "drawings"):
+        for step in ("envelope", "doors", "use", "drawings", "review", "review"):
             building.action_survey_next()
             self.assertEqual(building.survey_step, step)
         building.action_survey_back()
-        self.assertEqual(building.survey_step, "doors")
+        self.assertEqual(building.survey_step, "drawings")
         self.assertEqual(building.action_survey_done()["type"], "ir.actions.act_window_close")
         self.assertEqual(building.survey_step, "size", "Opened again, the survey starts from the top")
         self.assertTrue(lead.twp_db_survey_done)
+
+    def test_the_envelope_is_sized_like_the_template(self):
+        building = self._building(self._lead(), length=90, width=30, eave_height=14)
+        self.assertEqual(building.wall_area, 3360, "Gross walls: (90 + 30) x 2 x 14")
+        self.assertEqual(building.roof_area, 2700, "A flat roof")
+        self.assertEqual(building.slab_perimeter, 240)
+
+    def test_doors_and_windows_add_up_by_kind(self):
+        building = self._building(self._lead(), length=90, width=30, eave_height=14)
+        building.opening_ids = [
+            Command.create({"kind": "door", "door_style": "overhead", "count": 2, "width": 12, "height": 12,
+                            "insulated": True}),
+            Command.create({"kind": "door", "door_style": "man", "count": 3, "width": 3, "height": 7}),
+            Command.create({"kind": "window", "count": 4, "width": 3, "height": 4}),
+            Command.create({"kind": "skylight", "width": 4, "height": 8}),
+        ]
+        self.assertEqual(building.door_count, 5)
+        self.assertEqual(building.door_area, 2 * 144 + 3 * 21)
+        self.assertEqual(building.window_area, 48)
+        self.assertEqual(building.skylight_area, 32)

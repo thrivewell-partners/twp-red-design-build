@@ -1,12 +1,14 @@
 from odoo import api, fields, models
 
 INSULATED = [("insulated", "Insulated"), ("uninsulated", "Un-insulated")]
+# Line modules add steps of their own with selection_add, e.g. the heat loss before Review.
 SURVEY_STEPS = [
-    ("size", "Size"),
-    ("use", "Use"),
+    ("size", "Size and roof"),
     ("envelope", "Walls and roof"),
-    ("doors", "Doors and slab"),
+    ("doors", "Doors and windows"),
+    ("use", "Use"),
     ("drawings", "Drawings"),
+    ("review", "Review"),
 ]
 
 
@@ -29,8 +31,15 @@ class TwpDesignBuilding(models.Model):
     volume = fields.Float("Volume (cu ft)", compute="_compute_size", store=True)
     is_measured = fields.Boolean(
         "Measured", compute="_compute_size", store=True, help="Length, width and eave height are all filled in.")
-
     roof_shape = fields.Selection([("flat", "Flat"), ("dome", "Dome"), ("pitched", "Pitched")])
+    peak_height = fields.Float(
+        "Peak height (ft)", help="Floor to the peak. Recorded only: like the heat-loss template, the sizes "
+                                 "below take the roof as flat at the eave height.")
+    # The envelope as the heat-loss template sizes it: gross walls, a flat roof, the full slab perimeter.
+    wall_area = fields.Float("Wall area (sq ft)", compute="_compute_size", store=True)
+    roof_area = fields.Float("Roof area (sq ft)", compute="_compute_size", store=True)
+    slab_perimeter = fields.Float("Slab edge (lin ft)", compute="_compute_size", store=True)
+
     function = fields.Selection([
         ("manufacturing", "Manufacturing"),
         ("car_wash", "Car wash"),
@@ -46,8 +55,11 @@ class TwpDesignBuilding(models.Model):
     roof_material = fields.Char("Roof materials")
     roof_insulation = fields.Char("Roof insulation")
     roof_r_value = fields.Float("Roof R value")
-    door_type = fields.Selection([("roll_up", "Roll up"), ("track", "Track")], string="Doors")
-    door_insulation = fields.Selection(INSULATED, string="Door insulation")
+    opening_ids = fields.One2many("twp.design.building.opening", "building_id", string="Doors and windows")
+    door_count = fields.Integer("Doors", compute="_compute_openings", store=True)
+    door_area = fields.Float("Door area (sq ft)", compute="_compute_openings", store=True)
+    window_area = fields.Float("Window area (sq ft)", compute="_compute_openings", store=True)
+    skylight_area = fields.Float("Skylight area (sq ft)", compute="_compute_openings", store=True)
     slab_edge = fields.Selection(INSULATED)
     desired_temperature = fields.Float("Desired temp. (°F)")
     venting = fields.Selection([("sidewall", "Sidewall"), ("roof", "Roof")], string="Preferred venting")
@@ -64,10 +76,24 @@ class TwpDesignBuilding(models.Model):
     @api.depends("length", "width", "eave_height")
     def _compute_size(self):
         for building in self:
-            # The same arithmetic as the heat-loss template: length x width, times eave height.
-            building.area = building.length * building.width
-            building.volume = building.area * building.eave_height
-            building.is_measured = building.length > 0 and building.width > 0 and building.eave_height > 0
+            # The heat-loss template's own arithmetic, cell for cell (K9, I9, C15 + C16, C18, C22).
+            length, width, height = building.length, building.width, building.eave_height
+            building.area = length * width
+            building.volume = length * width * height
+            building.is_measured = length > 0 and width > 0 and height > 0
+            building.wall_area = (length + width) * 2 * height
+            building.roof_area = length * width
+            building.slab_perimeter = (length + width) * 2
+
+    @api.depends("opening_ids.kind", "opening_ids.count", "opening_ids.area")
+    def _compute_openings(self):
+        for building in self:
+            openings = building.opening_ids
+            doors = openings.filtered(lambda o: o.kind == "door")
+            building.door_count = sum(doors.mapped("count"))
+            building.door_area = sum(doors.mapped("area"))
+            building.window_area = sum(openings.filtered(lambda o: o.kind == "window").mapped("area"))
+            building.skylight_area = sum(openings.filtered(lambda o: o.kind == "skylight").mapped("area"))
 
     def _default_name(self):
         lead_id = self.env.context.get("default_lead_id")
@@ -89,7 +115,7 @@ class TwpDesignBuilding(models.Model):
 
     def _survey_move(self, offset):
         self.ensure_one()
-        keys = [key for key, _label in SURVEY_STEPS]
+        keys = self._fields["survey_step"].get_values(self.env)
         index = keys.index(self.survey_step) + offset
         self.survey_step = keys[max(0, min(index, len(keys) - 1))]
         return self.action_open_survey()
