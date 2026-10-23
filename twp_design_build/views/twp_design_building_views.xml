@@ -52,6 +52,87 @@
         </field>
     </record>
 
+    <!-- The survey wizard: the same building, a step at a time, in a dialog. -->
+    <record id="twp_design_building_view_form_survey" model="ir.ui.view">
+        <field name="name">twp.design.building.form.survey</field>
+        <field name="model">twp.design.building</field>
+        <field name="priority">100</field>
+        <field name="arch" type="xml">
+            <form string="Building survey">
+                <header>
+                    <field name="survey_step" widget="statusbar" options="{'clickable': '1'}"/>
+                </header>
+                <field name="lead_id" invisible="1"/>
+                <group invisible="survey_step != 'size'">
+                    <group string="Size">
+                        <field name="name" placeholder="Bldg 1"/>
+                        <field name="length"/>
+                        <field name="width"/>
+                        <field name="eave_height"/>
+                    </group>
+                    <group string="Works out to">
+                        <field name="area"/>
+                        <field name="volume"/>
+                    </group>
+                </group>
+                <group invisible="survey_step != 'use'">
+                    <group string="Use">
+                        <field name="function"/>
+                        <field name="function_other" invisible="function != 'other'"/>
+                        <field name="activity" placeholder="What goes on inside"/>
+                        <field name="desired_temperature"/>
+                    </group>
+                    <group string="Shape">
+                        <field name="roof_shape" widget="radio"/>
+                        <field name="venting" widget="radio"/>
+                    </group>
+                </group>
+                <group invisible="survey_step != 'envelope'">
+                    <group string="Walls">
+                        <field name="wall_material" placeholder="e.g. metal panel"/>
+                        <field name="wall_insulation" placeholder="e.g. fiberglass batt"/>
+                        <field name="wall_r_value"/>
+                    </group>
+                    <group string="Roof">
+                        <field name="roof_material"/>
+                        <field name="roof_insulation"/>
+                        <field name="roof_r_value"/>
+                    </group>
+                </group>
+                <group invisible="survey_step != 'doors'">
+                    <group string="Doors">
+                        <field name="door_type" widget="radio"/>
+                        <field name="door_insulation" widget="radio"/>
+                    </group>
+                    <group string="Slab">
+                        <field name="slab_edge" widget="radio"/>
+                    </group>
+                </group>
+                <group invisible="survey_step != 'drawings'">
+                    <group string="Drawings">
+                        <field name="floor_plan_attachment_ids" widget="many2many_binary"/>
+                        <field name="elevation_attachment_ids" widget="many2many_binary"/>
+                    </group>
+                    <group string="Notes">
+                        <field name="notes" nolabel="1" colspan="2"
+                               placeholder="Obstructions, anything the survey form has no box for"/>
+                    </group>
+                </group>
+                <footer>
+                    <button name="action_survey_back" string="Back" type="object"
+                            invisible="survey_step == 'size'"/>
+                    <button name="action_survey_next" string="Next" type="object" class="btn-primary"
+                            invisible="survey_step == 'drawings'"/>
+                    <button name="action_survey_done" string="Done" type="object" class="btn-primary"
+                            invisible="survey_step != 'drawings'"/>
+                    <button string="Save and close" special="save" class="btn-secondary"
+                            invisible="survey_step == 'drawings'"/>
+                    <button string="Discard" special="cancel" class="btn-secondary"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
     <record id="twp_design_building_view_list" model="ir.ui.view">
         <field name="name">twp.design.building.list</field>
         <field name="model">twp.design.building</field>

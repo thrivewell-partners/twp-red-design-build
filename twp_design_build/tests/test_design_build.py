@@ -114,3 +114,25 @@ class TestDesignBuild(TransactionCase):
             self.assertTrue(lead.twp_db_survey_done)
             self.assertTrue(lead.twp_db_design_done)
             self.assertTrue(lead.twp_db_layout_done)
+
+    def test_the_survey_wizard_steps_through_the_building(self):
+        lead = self._lead([self.infrared])
+        action = lead.action_twp_db_survey_building()
+        self.assertEqual(action["target"], "new")
+        self.assertFalse(action["res_id"], "A new building")
+        Building = self.env["twp.design.building"].with_context(action["context"])
+        building = Building.create({"length": 90, "width": 30, "eave_height": 14})
+        self.assertEqual(building.lead_id, lead)
+        self.assertEqual(building.name, "Bldg 1")
+        self.assertEqual(building.survey_step, "size")
+
+        self.assertEqual(building.action_survey_back()["res_id"], building.id)
+        self.assertEqual(building.survey_step, "size", "Back stops at the first step")
+        for step in ("use", "envelope", "doors", "drawings", "drawings"):
+            building.action_survey_next()
+            self.assertEqual(building.survey_step, step)
+        building.action_survey_back()
+        self.assertEqual(building.survey_step, "doors")
+        self.assertEqual(building.action_survey_done()["type"], "ir.actions.act_window_close")
+        self.assertEqual(building.survey_step, "size", "Opened again, the survey starts from the top")
+        self.assertTrue(lead.twp_db_survey_done)

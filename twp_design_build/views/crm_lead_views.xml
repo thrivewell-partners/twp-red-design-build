@@ -20,17 +20,21 @@
                         </group>
                     </group>
                     <separator string="Buildings"/>
+                    <button name="action_twp_db_survey_building" string="Survey a building" type="object"
+                            class="btn-secondary mb-2" icon="fa-building-o"/>
+                    <!-- A row opens the building's full form; Survey walks through it a step at a time. -->
                     <field name="twp_db_building_ids" context="{'default_lead_id': id}">
-                        <list editable="bottom">
+                        <list create="0">
                             <field name="sequence" widget="handle"/>
-                            <field name="name" placeholder="Bldg 1"/>
+                            <field name="name"/>
                             <field name="length"/>
                             <field name="width"/>
                             <field name="eave_height"/>
                             <field name="area"/>
                             <field name="volume" optional="hide"/>
                             <field name="function" optional="show"/>
-                            <field name="is_measured" column_invisible="True"/>
+                            <field name="is_measured" optional="show"/>
+                            <button name="action_open_survey" type="object" icon="fa-list-ol" title="Survey"/>
                         </list>
                     </field>
                     <separator string="Design jobs"/>

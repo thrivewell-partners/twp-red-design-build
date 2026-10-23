@@ -1,6 +1,13 @@
 from odoo import api, fields, models
 
 INSULATED = [("insulated", "Insulated"), ("uninsulated", "Un-insulated")]
+SURVEY_STEPS = [
+    ("size", "Size"),
+    ("use", "Use"),
+    ("envelope", "Walls and roof"),
+    ("doors", "Doors and slab"),
+    ("drawings", "Drawings"),
+]
 
 
 class TwpDesignBuilding(models.Model):
@@ -12,7 +19,7 @@ class TwpDesignBuilding(models.Model):
 
     lead_id = fields.Many2one("crm.lead", string="Lead", required=True, index=True, ondelete="cascade")
     sequence = fields.Integer(default=10)
-    name = fields.Char(required=True)
+    name = fields.Char(required=True, default=lambda self: self._default_name())
     company_id = fields.Many2one(related="lead_id.company_id", store=True)
 
     length = fields.Float("Length (ft)")
@@ -51,6 +58,8 @@ class TwpDesignBuilding(models.Model):
         "ir.attachment", "twp_design_building_elevation_rel", "building_id", "attachment_id",
         string="Elevation", help="With dimensions and interior obstructions.")
     notes = fields.Text()
+    # Where the survey wizard is. Stored, so a survey left half done reopens where it stopped.
+    survey_step = fields.Selection(SURVEY_STEPS, default="size", required=True)
 
     @api.depends("length", "width", "eave_height")
     def _compute_size(self):
@@ -59,6 +68,42 @@ class TwpDesignBuilding(models.Model):
             building.area = building.length * building.width
             building.volume = building.area * building.eave_height
             building.is_measured = building.length > 0 and building.width > 0 and building.eave_height > 0
+
+    def _default_name(self):
+        lead_id = self.env.context.get("default_lead_id")
+        if not lead_id:
+            return False
+        return f"Bldg {self.search_count([('lead_id', '=', lead_id)]) + 1}"
+
+    def action_open_survey(self):
+        """The survey wizard: this building, one step at a time, in a dialog. Empty, a new building."""
+        return {
+            "type": "ir.actions.act_window",
+            "name": self.name or self.env._("Building survey"),
+            "res_model": self._name,
+            "res_id": self[:1].id,
+            "view_mode": "form",
+            "views": [(self.env.ref("twp_design_build.twp_design_building_view_form_survey").id, "form")],
+            "target": "new",
+        }
+
+    def _survey_move(self, offset):
+        self.ensure_one()
+        keys = [key for key, _label in SURVEY_STEPS]
+        index = keys.index(self.survey_step) + offset
+        self.survey_step = keys[max(0, min(index, len(keys) - 1))]
+        return self.action_open_survey()
+
+    def action_survey_next(self):
+        return self._survey_move(1)
+
+    def action_survey_back(self):
+        return self._survey_move(-1)
+
+    def action_survey_done(self):
+        # Opened again, the survey starts from the top.
+        self.survey_step = "size"
+        return {"type": "ir.actions.act_window_close"}
 
     @api.model_create_multi
     def create(self, vals_list):

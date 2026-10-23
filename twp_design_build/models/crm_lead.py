@@ -50,6 +50,13 @@ class CrmLead(models.Model):
             self._twp_db_sync_jobs()
         return res
 
+    def action_twp_db_survey_building(self):
+        """The survey wizard on a new building."""
+        self.ensure_one()
+        action = self.env["twp.design.building"].action_open_survey()
+        action["context"] = {"default_lead_id": self.id}
+        return action
+
     def _twp_db_sync_jobs(self):
         """A job for every line chosen. A line removed archives its job, and choosing it again restores it."""
         Job = self.env["twp.design.job"].with_context(active_test=False)
