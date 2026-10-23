@@ -128,11 +128,15 @@ class TestDesignBuild(TransactionCase):
 
         self.assertEqual(building.action_survey_back()["res_id"], building.id)
         self.assertEqual(building.survey_step, "size", "Back stops at the first step")
-        for step in ("envelope", "doors", "use", "drawings", "review", "review"):
+        # Line modules may add steps, so walk whatever the field holds; Next stops at the last.
+        steps = building._fields["survey_step"].get_values(self.env)
+        self.assertEqual(steps[:5], ["size", "envelope", "doors", "use", "drawings"])
+        self.assertEqual(steps[-1], "review")
+        for step in steps[1:] + steps[-1:]:
             building.action_survey_next()
             self.assertEqual(building.survey_step, step)
         building.action_survey_back()
-        self.assertEqual(building.survey_step, "drawings")
+        self.assertEqual(building.survey_step, steps[-2])
         self.assertEqual(building.action_survey_done()["type"], "ir.actions.act_window_close")
         self.assertEqual(building.survey_step, "size", "Opened again, the survey starts from the top")
         self.assertTrue(lead.twp_db_survey_done)
