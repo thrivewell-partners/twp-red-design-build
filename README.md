@@ -7,7 +7,7 @@ from Bid / Spec. Radiant Energy Distribution is the first client.
 
 | Module | Status | What it does |
 |---|---|---|
-| `twp_design_build` | Not built yet (M1) | Its own list of design lines, each with a kind that line modules extend. "Designing for" on the lead, one design job per lead and line, building survey records shared by every line, and completion flags that stage checks can read |
+| `twp_design_build` | 19.0.1.0.0 | Its own list of design lines, each with a kind that line modules extend. "Designing for" on the lead, one design job per lead and line, building survey records shared by every line, and completion flags that stage checks can read |
 
 Client-specific work, such as Radiant's DRP heat loss, lives in that client's code repo and
 depends on `twp_design_build`.
